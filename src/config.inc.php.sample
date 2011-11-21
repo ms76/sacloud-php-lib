@@ -1,0 +1,3 @@
+<?php
+define('SACLOUD_KEY', 'Your Access Token');
+define('SACLOUD_SECRET_KEY', 'Your Access Token Secret');
