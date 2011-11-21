@@ -110,7 +110,7 @@ class Sacloud
      * @param integer $serverId
      * @return SacloudServer $server
      */
-    public function server($serverId)
+    public function server($serverId = '')
     {
         $server = new SacloudServer($this, $serverId);
         return $server;
@@ -121,7 +121,7 @@ class Sacloud
      *
      * @see Sacloud::server()
      */
-    public function setServer($serverId)
+    public function setServer($serverId = '')
     {
         return $this->server($serverId);
     }
