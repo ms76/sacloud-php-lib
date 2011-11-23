@@ -191,7 +191,7 @@ class SacloudServer
     {
         $path = '/server/' . $this->serverId . '/vnc/snapshot.png';
         return $this->sacloud
-                    ->api($path, 'GET');
+                    ->api($path, 'GET', null, 'raw');
     }
 
     public function sendCtrlAltDelete()

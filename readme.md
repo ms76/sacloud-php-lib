@@ -1,11 +1,14 @@
-PHP Library for Cloud API of SAKURA Internet (v.0.1)
-==========================================
+PHP Library for Cloud API of SAKURA Internet
+============================================
 
-This is the liblary for [Cloud API of SAKURA Internet](http://developer.sakura.ad.jp/cloud/api/).
+This is the library for [Cloud API of SAKURA Internet](http://developer.sakura.ad.jp/cloud/api/).
 
 Requirements
 ------------
-* PHP5(curl module)
+
+* PHP 5.2 or later with the following extensions:
+    * cURL with SSL(HTTPS)
+    * JSON
 
 Usage
 -----
@@ -17,9 +20,17 @@ Usage
     // Get Server Status
     $status = $sacloud->server('Your Server ID')->getStatus();
     
+    or
+
+    $status = $sacloud->api('/server/{Your Server ID}', 'GET');
+
+If you use the configuration file "src/config.inc.php" (renamed from "config.inc.php.sample"), constructor arguments are omissible.
+
+    $sacloud = new Sacloud();
 
 License
 -------
+
 Copyright 2011 Masashi Sekine <sekine@cloudrop.jp>.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may
