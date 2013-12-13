@@ -24,26 +24,29 @@ if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.inc.php')) {
  */
 class Sacloud
 {
-    const END_POINT = 'https://secure.sakura.ad.jp/cloud/api/cloud/0.2';
+    const END_POINT_IS1A = 'https://secure.sakura.ad.jp/cloud/zone/is1a/api/cloud/1.1/';
+    const END_POINT_IS1B = 'https://secure.sakura.ad.jp/cloud/zone/is1b/api/cloud/1.1/';
     protected $key;
     protected $secretKey;
     protected $isDebug = false;
+    protected $endPoint;
 
-    public function __construct($key = null, $secretKey = null)
+    public function __construct($key = null, $secretKey = null, $endPoint = self::END_POINT_IS1A)
     {
         if ($key && $secretKey) {
             $this->key = $secretKey;
             $this->secretKey = $secretKey;
-            return;
 
         } elseif (defined('SACLOUD_KEY') && defined('SACLOUD_SECRET_KEY')) {
             $this->key = SACLOUD_KEY;
             $this->secretKey = SACLOUD_SECRET_KEY;
-            return;
 
         } else {
             throw new SacloudException('No valid credentials were used to authenticate with SAKURA Internet API.');
         }
+
+        $this->endPoint = $endPoint;
+
     }
 
     public function api($path, $method = 'GET', $params = null, $format = 'json')
@@ -51,7 +54,7 @@ class Sacloud
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
         curl_setopt($ch, CURLOPT_USERPWD, $this->key . ':' . $this->secretKey);
-        curl_setopt($ch, CURLOPT_URL, self::END_POINT . $path);
+        curl_setopt($ch, CURLOPT_URL, $this->endPoint . $path);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         $params = (is_array($params)) ? http_build_query($params) : $params;
