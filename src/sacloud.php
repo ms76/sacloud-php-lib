@@ -15,6 +15,10 @@ if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.inc.php')) {
     include_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.inc.php';
 }
 
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'server.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'archive.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'facility.php';
+
 /**
  * Sacloud
  *
@@ -24,26 +28,31 @@ if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.inc.php')) {
  */
 class Sacloud
 {
-    const END_POINT = 'https://secure.sakura.ad.jp/cloud/api/cloud/0.2';
+    const IS1A = 'is1a';
+    const IS1B = 'is1b';
+    const END_POINT_IS1A = 'https://secure.sakura.ad.jp/cloud/zone/is1a/api/cloud/1.1/';
+    const END_POINT_IS1B = 'https://secure.sakura.ad.jp/cloud/zone/is1b/api/cloud/1.1/';
     protected $key;
     protected $secretKey;
     protected $isDebug = false;
+    protected $endPoint;
 
-    public function __construct($key = null, $secretKey = null)
+    public function __construct($key = null, $secretKey = null, $endPoint = self::END_POINT_IS1A)
     {
         if ($key && $secretKey) {
             $this->key = $secretKey;
             $this->secretKey = $secretKey;
-            return;
 
         } elseif (defined('SACLOUD_KEY') && defined('SACLOUD_SECRET_KEY')) {
             $this->key = SACLOUD_KEY;
             $this->secretKey = SACLOUD_SECRET_KEY;
-            return;
 
         } else {
             throw new SacloudException('No valid credentials were used to authenticate with SAKURA Internet API.');
         }
+
+        $this->endPoint = $endPoint;
+
     }
 
     public function api($path, $method = 'GET', $params = null, $format = 'json')
@@ -51,7 +60,7 @@ class Sacloud
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_DIGEST);
         curl_setopt($ch, CURLOPT_USERPWD, $this->key . ':' . $this->secretKey);
-        curl_setopt($ch, CURLOPT_URL, self::END_POINT . $path);
+        curl_setopt($ch, CURLOPT_URL, $this->endPoint . $path);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         $params = (is_array($params)) ? http_build_query($params) : $params;
@@ -110,7 +119,7 @@ class Sacloud
      * @param integer $serverId
      * @return SacloudServer $server
      */
-    public function server($serverId)
+    public function server($serverId = '')
     {
         $server = new SacloudServer($this, $serverId);
         return $server;
@@ -121,9 +130,27 @@ class Sacloud
      *
      * @see Sacloud::server()
      */
-    public function setServer($serverId)
+    public function setServer($serverId = '')
     {
         return $this->server($serverId);
+    }
+
+    /**
+     * Create an archive instance.
+     */
+    public function archive($archiveId = '')
+    {
+        $archive = new SacloudArchive($this, $archiveId);
+        return $archive;
+    }
+
+    /**
+     * Create an facilty instance.
+     */
+    public function facility()
+    {
+     $archive = new SacloudFacility($this);
+     return $archive;
     }
 
     /**
@@ -141,80 +168,6 @@ class Sacloud
     }
 }
 
-/**
- * SacloudServer
- *
- *  @package    Sacloud
- *  @author     Masashi Sekine <sekine@cloudrop.jp>
- *  @license    Apache License 2.0
- */
-class SacloudServer
-{
-    protected $serverId;
-    protected $sacloud;
-
-    public function __construct(Sacloud $sacloud, $serverId)
-    {
-        $this->sacloud = $sacloud;
-        $this->serverId = $serverId;
-    }
-
-    public function getStatus()
-    {
-        $path = '/server/' . $this->serverId;
-        return $this->sacloud
-                    ->api($path, 'GET');
-    }
-
-    public function getInstanceStatus()
-    {
-        $path = '/server/' . $this->serverId . '/power';
-        return $this->sacloud
-                    ->api($path, 'GET');
-    }
-
-    public function powerOn()
-    {
-        $path = '/server/' . $this->serverId . '/power';
-        return $this->sacloud
-                    ->api($path, 'PUT');
-    }
-
-    public function powerOff()
-    {
-        $path = '/server/' . $this->serverId . '/power';
-        return $this->sacloud
-                    ->api($path, 'DELETE');
-    }
-
-    public function getScreenShot($format = 'png')
-    {
-        $path = '/server/' . $this->serverId . '/vnc/snapshot.png';
-        return $this->sacloud
-                    ->api($path, 'GET', null, 'raw');
-    }
-
-    public function sendCtrlAltDelete()
-    {
-        $path = '/server/' . $this->serverId . '/keyboard';
-        return $this->sacloud
-                    ->api($path, 'PUT', '{"Keys": ["ctrl","alt","delete"]}');
-    }
-
-    public function getMonitor()
-    {
-        $path = '/server/' . $this->serverId . '/monitor';
-        return $this->sacloud
-                    ->api($path, 'GET');
-    }
-
-    public function reset()
-    {
-        $path = '/server/' . $this->serverId . '/reset';
-        return $this->sacloud
-                    ->api($path, 'PUT');
-    }
-}
 
 /**
  * SacloudException
@@ -225,4 +178,19 @@ class SacloudServer
  */
 class SacloudException extends Exception
 {
+}
+
+/**
+ * Some uility methods.
+ *
+ *  @package    Sacloud
+ *  @author     Shoichiro Fujiwara <warafujisho@gmail.com>
+ *  @license    Apache License 2.0
+ */
+class SacloudUtility
+{
+ public static function getValue($name, array $options, $defaultValue)
+ {
+  return isset($options[$name])?$options[$name]:$defaultValue;
+ }
 }
