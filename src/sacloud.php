@@ -15,6 +15,10 @@ if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.inc.php')) {
     include_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.inc.php';
 }
 
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'server.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'archive.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'facility.php';
+
 /**
  * Sacloud
  *
@@ -24,6 +28,8 @@ if (file_exists(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.inc.php')) {
  */
 class Sacloud
 {
+    const IS1A = 'is1a';
+    const IS1B = 'is1b';
     const END_POINT_IS1A = 'https://secure.sakura.ad.jp/cloud/zone/is1a/api/cloud/1.1/';
     const END_POINT_IS1B = 'https://secure.sakura.ad.jp/cloud/zone/is1b/api/cloud/1.1/';
     protected $key;
@@ -130,6 +136,24 @@ class Sacloud
     }
 
     /**
+     * Create an archive instance.
+     */
+    public function archive($archiveId = '')
+    {
+        $archive = new SacloudArchive($this, $archiveId);
+        return $archive;
+    }
+
+    /**
+     * Create an facilty instance.
+     */
+    public function facility()
+    {
+     $archive = new SacloudFacility($this);
+     return $archive;
+    }
+
+    /**
      * Set debug-mode flag
      *
      * @param boolean $debug
@@ -144,80 +168,6 @@ class Sacloud
     }
 }
 
-/**
- * SacloudServer
- *
- *  @package    Sacloud
- *  @author     Masashi Sekine <sekine@cloudrop.jp>
- *  @license    Apache License 2.0
- */
-class SacloudServer
-{
-    protected $serverId;
-    protected $sacloud;
-
-    public function __construct(Sacloud $sacloud, $serverId)
-    {
-        $this->sacloud = $sacloud;
-        $this->serverId = $serverId;
-    }
-
-    public function getStatus()
-    {
-        $path = '/server/' . $this->serverId;
-        return $this->sacloud
-                    ->api($path, 'GET');
-    }
-
-    public function getInstanceStatus()
-    {
-        $path = '/server/' . $this->serverId . '/power';
-        return $this->sacloud
-                    ->api($path, 'GET');
-    }
-
-    public function powerOn()
-    {
-        $path = '/server/' . $this->serverId . '/power';
-        return $this->sacloud
-                    ->api($path, 'PUT');
-    }
-
-    public function powerOff()
-    {
-        $path = '/server/' . $this->serverId . '/power';
-        return $this->sacloud
-                    ->api($path, 'DELETE');
-    }
-
-    public function getScreenShot($format = 'png')
-    {
-        $path = '/server/' . $this->serverId . '/vnc/snapshot.png';
-        return $this->sacloud
-                    ->api($path, 'GET', null, 'raw');
-    }
-
-    public function sendCtrlAltDelete()
-    {
-        $path = '/server/' . $this->serverId . '/keyboard';
-        return $this->sacloud
-                    ->api($path, 'PUT', '{"Keys": ["ctrl","alt","delete"]}');
-    }
-
-    public function getMonitor()
-    {
-        $path = '/server/' . $this->serverId . '/monitor';
-        return $this->sacloud
-                    ->api($path, 'GET');
-    }
-
-    public function reset()
-    {
-        $path = '/server/' . $this->serverId . '/reset';
-        return $this->sacloud
-                    ->api($path, 'PUT');
-    }
-}
 
 /**
  * SacloudException
@@ -228,4 +178,19 @@ class SacloudServer
  */
 class SacloudException extends Exception
 {
+}
+
+/**
+ * Some uility methods.
+ *
+ *  @package    Sacloud
+ *  @author     Shoichiro Fujiwara <warafujisho@gmail.com>
+ *  @license    Apache License 2.0
+ */
+class SacloudUtility
+{
+ public static function getValue($name, array $options, $defaultValue)
+ {
+  return isset($options[$name])?$options[$name]:$defaultValue;
+ }
 }
